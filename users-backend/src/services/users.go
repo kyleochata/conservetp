@@ -7,11 +7,12 @@ import (
 )
 
 type UsersService struct {
-	usersData *data.UsersData
+	usersData     *data.UsersData
+	addressesData *data.AddressesData
 }
 
-func NewUsersService(usersData *data.UsersData) *UsersService {
-	return &UsersService{usersData: usersData}
+func NewUsersService(usersData *data.UsersData, addressesData *data.AddressesData) *UsersService {
+	return &UsersService{usersData: usersData, addressesData: addressesData}
 }
 
 func (us *UsersService) GetAllUsers() ([]data.User, error) {

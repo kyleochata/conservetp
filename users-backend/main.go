@@ -30,7 +30,8 @@ func main() {
 
 	// Initialize layers
 	usersData := data.NewUsersData(db)
-	usersService := services.NewUsersService(usersData)
+	addressesData := data.NewAddressesData(db)
+	usersService := services.NewUsersService(usersData, addressesData)
 	usersHandler := handlers.NewUsersHandler(usersService)
 
 	// Setup routes
