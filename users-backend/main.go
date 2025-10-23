@@ -34,13 +34,15 @@ func main() {
 	usersService := services.NewUsersService(usersData, addressesData)
 	usersHandler := handlers.NewUsersHandler(usersService)
 
+	m := http.NewServeMux()
 	// Setup routes
-	http.HandleFunc("/users", usersHandler.HandleUsers)
-	//http.HandleFunc("/users/", usersHandler.HandleUserByID)
-	//http.HandleFunc("/health", healthCheck)
-
-	fmt.Println("🚀 Server starting on :8080")
-	log.Fatal(http.ListenAndServe(":8080", nil))
+	m.HandleFunc("/api/users", usersHandler.HandleUsers)
+	m.HandleFunc("/api/users/{id}", usersHandler.HandleUserId)
+	//m.HandleFunc("/api, healthHandler")
+	// m.HandleFunc("/api/users/{id}?address={address_id}", usersHandler.HandleUserAddress)
+	port := getEnv("PORT", "8080")
+	fmt.Println("🚀 Server starting on :" + port)
+	log.Fatal(http.ListenAndServe(":"+port, m)) // must pass mux. (nil when using global http.HandleFunc)
 }
 
 func waitForDB() error {
@@ -78,18 +80,6 @@ func connectToDB() (*sql.DB, error) {
 	}
 
 	return db, nil
-}
-
-func testUsersTable(db *sql.DB) error {
-	// Try to select from users table
-	var count int
-	err := db.QueryRow("SELECT COUNT(*) FROM users").Scan(&count)
-	if err != nil {
-		return fmt.Errorf("users table query failed: %w", err)
-	}
-
-	fmt.Printf("✅ Users table exists with %d records\n", count)
-	return nil
 }
 
 func getEnv(key, defaultValue string) string {
