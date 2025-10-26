@@ -15,6 +15,7 @@ import (
 )
 
 func main() {
+	fmt.Println("new start")
 	// Wait for database to be ready
 	if err := waitForDB(); err != nil {
 		log.Fatal("Failed to connect to database:", err)
@@ -41,7 +42,8 @@ func main() {
 	//m.HandleFunc("/api, healthHandler")
 	// m.HandleFunc("/api/users/{id}?address={address_id}", usersHandler.HandleUserAddress)
 	port := getEnv("PORT", "8080")
-	fmt.Println("🚀 Server starting on :" + port)
+	fmt.Println("🚀  hello Server starting on :" + port)
+	fmt.Println("rat")
 	log.Fatal(http.ListenAndServe(":"+port, m)) // must pass mux. (nil when using global http.HandleFunc)
 }
 
