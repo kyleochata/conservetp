@@ -186,31 +186,3 @@ func (us UsersService) updateStringField(old, new string) string {
 	}
 	return old
 }
-
-// if new.Street != "" && new.Street != prev.Address.Street {
-// 	updated.Street = new.Street
-// }
-// if new.AptNum != "" && new.AptNum != prev.Address.AptNum {
-// 	updated.AptNum = new.AptNum
-// }
-
-// if new.Zipcode != "" && new.Zipcode != prev.Address.Zipcode {
-// 	updated.Zipcode = new.Zipcode
-// }
-
-// if new.City != "" && new.City != prev.Address.City {
-// 	updated.City = new.City
-// }
-
-// if new.State != "" && new.State != prev.Address.State {
-// 	updated.State = new.State
-// }
-
-// if new.Country != "" && new.Country != prev.Address.Country {
-// 	updated.Country = new.Country
-// }
-
-// // For booleans, just check if different
-// if new.IsPrimary != prev.Address.IsPrimary {
-// 	updated.IsPrimary = new.IsPrimary
-// }

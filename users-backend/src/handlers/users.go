@@ -29,12 +29,14 @@ func (uh *UsersHandler) HandleUsers(w http.ResponseWriter, r *http.Request) {
 }
 func (uh *UsersHandler) HandleUserId(w http.ResponseWriter, r *http.Request) {
 	id := r.PathValue("id")
+	fmt.Printf("id = %s", id)
 	if id == "" {
 		http.Error(w, "User id path extraction failed", http.StatusBadRequest)
+		return
 	}
 	switch r.Method {
 	case http.MethodGet:
-		uh.getUserById(w, r, id)
+		uh.getUserById(w, r)
 	case http.MethodPut:
 		uh.updateUserById(w, r, id)
 	case http.MethodDelete:
@@ -52,8 +54,13 @@ func (uh UsersHandler) getAllUsers(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, fmt.Sprintf("failed  to get users: %v", err), http.StatusInternalServerError)
 		return
 	}
+
 	w.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(w).Encode(users)
+	w.WriteHeader(http.StatusOK)
+	if err := json.NewEncoder(w).Encode(users); err != nil {
+		http.Error(w, "Failed to encode response", http.StatusInternalServerError)
+		return
+	}
 }
 
 func (uh UsersHandler) createSingleUser(w http.ResponseWriter, r *http.Request) {
@@ -86,15 +93,20 @@ func (uh UsersHandler) createSingleUser(w http.ResponseWriter, r *http.Request) 
 
 // Single User calls
 
-func (uh UsersHandler) getUserById(w http.ResponseWriter, r *http.Request, userId string) {
-	user, err := uh.usersService.GetSingleUserById(userId)
+func (uh UsersHandler) getUserById(w http.ResponseWriter, r *http.Request) {
+	uId := r.URL.Path
+	fmt.Printf("uId: %s\n", uId)
+	user, err := uh.usersService.GetSingleUserById(uId)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
-
 	w.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(w).Encode(*user)
+	w.WriteHeader(http.StatusOK)
+	if err := json.NewEncoder(w).Encode(*user); err != nil {
+		http.Error(w, "Failed to encod response", http.StatusInternalServerError)
+		return
+	}
 }
 
 func (uh UsersHandler) updateUserById(w http.ResponseWriter, r *http.Request, userId string) {

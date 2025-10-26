@@ -81,9 +81,10 @@ func (ud UsersData) GetUserById(id string) (*types.UserResponse, error) {
 	}
 	var user types.UserResponse
 	err := ud.db.QueryRow(
-		"SELECT id, name, email FROM users WHERE id = $1 RETURNING id, name, email",
+		"SELECT id, name, email FROM users WHERE id = $1",
 		id,
 	).Scan(&user.User.ID, &user.User.Name, &user.User.Email)
+	fmt.Print(user.User.ID)
 	if err != nil {
 		return nil, fmt.Errorf("Error getting userbyid: %s: %w", id, err)
 	}
