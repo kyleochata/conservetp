@@ -76,19 +76,23 @@ func (ud *UsersData) DeleteUser(id string) error {
 }
 
 func (ud UsersData) GetUserById(id string) (*types.UserResponse, error) {
+	fmt.Println("Start getUserbyid data")
 	if id == "" {
 		return nil, fmt.Errorf("Error getting userbyid: empty id")
 	}
-	var user types.UserResponse
+	fmt.Println(id)
+	var user types.User
 	err := ud.db.QueryRow(
 		"SELECT id, name, email FROM users WHERE id = $1",
 		id,
-	).Scan(&user.User.ID, &user.User.Name, &user.User.Email)
-	fmt.Print(user.User.ID)
+	).Scan(&user.ID, &user.Name, &user.Email)
+	fmt.Println(user.ID)
 	if err != nil {
 		return nil, fmt.Errorf("Error getting userbyid: %s: %w", id, err)
 	}
-	return &user, nil
+	return &types.UserResponse{
+		User: &user,
+	}, nil
 }
 
 // func (ud UsersData) GetUserByEmail(email string) (User, error) {

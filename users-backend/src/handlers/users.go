@@ -36,6 +36,7 @@ func (uh *UsersHandler) HandleUserId(w http.ResponseWriter, r *http.Request) {
 	}
 	switch r.Method {
 	case http.MethodGet:
+		fmt.Println("calling getUserById handlers")
 		uh.getUserById(w, r)
 	case http.MethodPut:
 		uh.updateUserById(w, r, id)
@@ -94,8 +95,10 @@ func (uh UsersHandler) createSingleUser(w http.ResponseWriter, r *http.Request) 
 // Single User calls
 
 func (uh UsersHandler) getUserById(w http.ResponseWriter, r *http.Request) {
-	uId := r.URL.Path
+	fmt.Println("start getUserById handler")
+	uId := r.PathValue("id")
 	fmt.Printf("uId: %s\n", uId)
+	fmt.Println(uId)
 	user, err := uh.usersService.GetSingleUserById(uId)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)

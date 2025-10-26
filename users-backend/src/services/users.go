@@ -25,6 +25,8 @@ func (us *UsersService) GetSingleUserById(id string) (*types.UserResponse, error
 	if id == "" {
 		return nil, fmt.Errorf("Error getting user by id: empty user - (s)")
 	}
+	fmt.Println("Start getuserbyid service")
+	fmt.Println(id)
 	getUserByIdResponse, err := us.usersData.GetUserById(id)
 	if err != nil {
 		return nil, err
