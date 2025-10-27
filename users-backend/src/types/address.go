@@ -8,7 +8,7 @@ type Address struct {
 	ID        string    `json:"id"`
 	UserID    string    `json:"user_id"`
 	Street    string    `json:"street"`
-	AptNum    string    `json:"apt_num,omitempty"`
+	AptNum    *string   `json:"apt_num,omitempty"`
 	Zipcode   string    `json:"zipcode"`
 	City      string    `json:"city"`
 	State     string    `json:"state"`

@@ -5,14 +5,14 @@ import (
 )
 
 type User struct {
-	ID        string    `json:"id"`
-	Email     string    `json:"email"`
-	Name      string    `json:"name"`
-	Pwd       string    `json:"pwd,omitempty"`
-	CreatedAt time.Time `json:"created_at"`
-	UpdatedAt time.Time `json:"updated_at"`
-	LastLogin time.Time `json:"last_login,omitempty"`
-	IsActive  bool      `json:"is_active"`
+	ID        string     `json:"id"`
+	Email     string     `json:"email"`
+	Name      string     `json:"name"`
+	Pwd       string     `json:"pwd,omitempty"`
+	CreatedAt time.Time  `json:"created_at"`
+	UpdatedAt time.Time  `json:"updated_at"`
+	LastLogin *time.Time `json:"last_login,omitempty"`
+	IsActive  bool       `json:"is_active"`
 }
 
 type CreateUserRequest struct {

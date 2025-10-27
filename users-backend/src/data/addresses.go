@@ -16,17 +16,6 @@ func NewAddressesData(db *sql.DB) *AddressesData {
 	return &AddressesData{db: db}
 }
 
-// type Address struct {
-// 	ID        string `json:"id"`
-// 	Street    string `json:"street"`
-// 	AptNumber string `json:"apt_num"`
-// 	Zipcode   string `json:"zipccode"`
-// 	City      string `json:"city"`
-// 	State     string `json:"state"`
-// 	Country   string `json:"country"`
-// 	IsPrimary bool   `json:"is_primary"`
-// }
-
 func (ad AddressesData) GetAllAddresses() ([]types.Address, error) {
 	rows, err := ad.db.Query("SELECT id, user_id, street, apt_num, zipcode, city, state, country, is_primary FROM addresses")
 	if err != nil {
@@ -58,19 +47,23 @@ func (ad *AddressesData) CreateNewAddress(address *types.CreateAddressRequest, u
 		return nil, fmt.Errorf("Failed to create new address: empty address")
 	}
 
-	var newAddr types.AddressResponse
+	var newAddr types.Address
 
 	err := ad.db.QueryRow(
-		"INSERT INTO addresses (user_id, street, apt_num, zipcode, city, state, country, is_primary) VALUES ($1, $2, $3, $4, $5, $6, $7, $8) RETURNING user_id, street, apt_num, zipcode, city, state, country, is_primary",
-		address.Street, userId, address.AptNum, address.Zipcode, address.City, address.State, address.Country, address.IsPrimary,
+		`INSERT INTO addresses (user_id, street, apt_num, zipcode, city, state, country, is_primary) 
+		VALUES ($1, $2, $3, $4, $5, $6, $7, $8) 
+		RETURNING id, street, apt_num, zipcode, city, state, country, is_primary`,
+		userId, address.Street, address.AptNum, address.Zipcode, address.City, address.State, address.Country, address.IsPrimary,
 	).Scan(
-		&newAddr.Address.ID, &newAddr.Address.Street, &newAddr.Address.AptNum, &newAddr.Address.Zipcode,
-		&newAddr.Address.City, &newAddr.Address.State, &newAddr.Address.Country, &newAddr.Address.IsPrimary,
+		&newAddr.ID, &newAddr.Street, &newAddr.AptNum, &newAddr.Zipcode,
+		&newAddr.City, &newAddr.State, &newAddr.Country, &newAddr.IsPrimary,
 	)
 	if err != nil {
 		return nil, fmt.Errorf("Failed to Insert New address: %w", err)
 	}
-	return &newAddr, nil
+	return &types.AddressResponse{
+		Address: &newAddr,
+	}, nil
 }
 
 // func (ad AddressesData) GetNumberOfAddressBy(filterTag, filterValue string) (int, error) {
@@ -103,13 +96,13 @@ func (ad *AddressesData) GetAddressById(id string) (*types.AddressResponse, erro
 	if id == "" {
 		return nil, fmt.Errorf("Error getting address by id: empty id data")
 	}
-	var res types.AddressResponse
+	var res types.Address
 	err := ad.db.QueryRow(
 		"SELECT id, user_id, street, apt_num, zipcode, city, state, country, is_primary FROM addresses WHERE id = $1",
 		id,
 	).Scan(
-		&res.Address.ID, &res.Address.UserID, &res.Address.Street, &res.Address.AptNum,
-		&res.Address.Zipcode, &res.Address.City, &res.Address.State, &res.Address.Country, &res.Address.IsPrimary,
+		&res.ID, &res.UserID, &res.Street, &res.AptNum,
+		&res.Zipcode, &res.City, &res.State, &res.Country, &res.IsPrimary,
 	)
 	if err != nil {
 		if err == sql.ErrNoRows {
@@ -117,7 +110,7 @@ func (ad *AddressesData) GetAddressById(id string) (*types.AddressResponse, erro
 		}
 		return nil, fmt.Errorf("Failed to get addres by id: %s: %w", id, err)
 	}
-	return &res, nil
+	return &types.AddressResponse{Address: &res}, nil
 
 }
 
@@ -137,7 +130,7 @@ func (ad *AddressesData) UpdateAddress(addrId, userId string, newAddr *types.Cre
 		return ad.CreateNewAddress(newAddr, userId)
 	}
 
-	var updatedAddrResponse types.AddressResponse
+	var updatedAddr types.Address
 	err = ad.db.QueryRow(
 		`UPDATE addresses 
 		 SET street = $1, apt_num = $2, zipcode = $3, city = $4, state = $5, country = $6, is_primary = $7
@@ -146,14 +139,16 @@ func (ad *AddressesData) UpdateAddress(addrId, userId string, newAddr *types.Cre
 		newAddr.Street, newAddr.AptNum, newAddr.Zipcode, newAddr.City, newAddr.State, newAddr.Country, newAddr.IsPrimary,
 		addrId, userId,
 	).Scan(
-		&updatedAddrResponse.Address.ID, &updatedAddrResponse.Address.UserID, &updatedAddrResponse.Address.Street, &updatedAddrResponse.Address.AptNum,
-		&updatedAddrResponse.Address.Zipcode, &updatedAddrResponse.Address.City, &updatedAddrResponse.Address.State, &updatedAddrResponse.Address.Country, &updatedAddrResponse.Address.IsPrimary,
+		&updatedAddr.ID, &updatedAddr.UserID, &updatedAddr.Street, &updatedAddr.AptNum,
+		&updatedAddr.Zipcode, &updatedAddr.City, &updatedAddr.State, &updatedAddr.Country, &updatedAddr.IsPrimary,
 	)
 	if err != nil {
 		return nil, fmt.Errorf("Failed at updateAddrRes: %w", err)
 	}
 
-	return &updatedAddrResponse, nil
+	return &types.AddressResponse{
+		Address: &updatedAddr,
+	}, nil
 }
 
 type Filter interface {

@@ -16,16 +16,8 @@ func NewUsersData(db *sql.DB) *UsersData {
 	return &UsersData{db: db}
 }
 
-// type User struct {
-// 	ID        string `json:"id"`
-// 	Name      string `json:"name"`
-// 	Email     string `json:"email"`
-// 	IsActive  bool   `json:"is_active"`
-// 	Addresses []string
-// }
-
 func (ud *UsersData) GetAllUsers() ([]types.User, error) {
-	rows, err := ud.db.Query("SELECT id, name, email FROM users WHERE is_active = true")
+	rows, err := ud.db.Query("SELECT id, name, email, created_at, last_login FROM users WHERE is_active = true")
 	if err != nil {
 		return nil, fmt.Errorf("failed to get users: %w", err)
 	}
@@ -34,7 +26,7 @@ func (ud *UsersData) GetAllUsers() ([]types.User, error) {
 	users := []types.User{}
 	for rows.Next() {
 		var user types.User
-		if err := rows.Scan(&user.ID, &user.Name, &user.Email); err != nil {
+		if err := rows.Scan(&user.ID, &user.Name, &user.Email, &user.CreatedAt, &user.LastLogin); err != nil {
 			return nil, fmt.Errorf("failed to scan user: %w", err)
 		}
 		users = append(users, user)
@@ -46,15 +38,17 @@ func (ud *UsersData) GetAllUsers() ([]types.User, error) {
 }
 
 func (ud *UsersData) CreateUser(user types.CreateUserData) (*types.UserResponse, error) {
-	var newUser types.UserResponse
+	var newUser types.User
 	err := ud.db.QueryRow(
 		"INSERT INTO users (email, name, pwd) VALUES ($1, $2, $3) RETURNING id, email, name, created_at",
 		user.Email, user.Name, user.Pwd,
-	).Scan(&newUser.User.ID, &newUser.User.Email, &newUser.User.Name, &newUser.User.CreatedAt)
+	).Scan(&newUser.ID, &newUser.Email, &newUser.Name, &newUser.CreatedAt)
 	if err != nil {
 		return nil, fmt.Errorf("failed to insert new user into table: %w", err)
 	}
-	return &newUser, nil
+	return &types.UserResponse{
+		User: &newUser,
+	}, nil
 }
 
 func (ud *UsersData) DeleteUser(id string) error {
@@ -81,26 +75,29 @@ func (ud UsersData) GetUserById(id string) (*types.UserResponse, error) {
 		return nil, fmt.Errorf("Error getting userbyid: empty id")
 	}
 	fmt.Println(id)
-	var user types.UserResponse
+	var user types.User
 	err := ud.db.QueryRow(
 		`SELECT id, name, email, created_at, updated_at, last_login, is_active 
          FROM users WHERE id = $1`,
 		id,
 	).Scan(
-		&user.User.ID,
-		&user.User.Name,
-		&user.User.Email,
-		&user.User.CreatedAt,
-		&user.User.UpdatedAt,
-		&user.User.LastLogin,
-		&user.User.IsActive,
+		&user.ID,
+		&user.Name,
+		&user.Email,
+		&user.CreatedAt,
+		&user.UpdatedAt,
+		&user.LastLogin,
+		&user.IsActive,
 	)
 
-	fmt.Println(user.User.ID)
+	fmt.Println(user.ID)
+	fmt.Printf("time: %s", user.CreatedAt)
 	if err != nil {
 		return nil, fmt.Errorf("Error getting userbyid: %s: %w", id, err)
 	}
-	return &user, nil
+	return &types.UserResponse{
+		User: &user,
+	}, nil
 }
 
 // func (ud UsersData) GetUserByEmail(email string) (User, error) {
@@ -150,12 +147,14 @@ func (ud *UsersData) UpdateUserInfo(id string, updUser types.CreateUserData) (*t
 	query += fmt.Sprintf(" WHERE id = $%d RETURNING id, name, email", paramCount)
 	params = append(params, id)
 
-	var user types.UserResponse
-	err := ud.db.QueryRow(query, params...).Scan(&user.User.ID, &user.User.Name, &user.User.Email)
+	var user types.User
+	err := ud.db.QueryRow(query, params...).Scan(&user.ID, &user.Name, &user.Email)
 	if err != nil {
 		return nil, fmt.Errorf("Error updating user: %w", err)
 	}
-	return &user, nil
+	return &types.UserResponse{
+		User: &user,
+	}, nil
 }
 
 // func (ud *UsersData) ChangeUserActivity(id string, isActive bool) (User, error) {

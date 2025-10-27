@@ -47,6 +47,7 @@ func (us *UsersService) CreateUserWAddress(user types.CreateUserRequest) (types.
 	if err != nil {
 		return types.UserResponse{}, err
 	}
+	fmt.Println(addr)
 	userCreationResponse.Address = addr
 	return *userCreationResponse, nil
 }
@@ -172,7 +173,7 @@ func (us UsersService) parseAddressChanges(prev *types.AddressResponse, new *typ
 	}
 	updated := &types.CreateAddressRequest{}
 	updated.Street = us.updateStringField(prev.Address.Street, new.Street)
-	updated.AptNum = us.updateStringField(prev.Address.AptNum, new.AptNum)
+	updated.AptNum = us.updateStringField(*prev.Address.AptNum, new.AptNum)
 	updated.Zipcode = us.updateStringField(prev.Address.Zipcode, new.Zipcode)
 	updated.City = us.updateStringField(prev.Address.City, new.City)
 	updated.State = us.updateStringField(prev.Address.State, new.State)

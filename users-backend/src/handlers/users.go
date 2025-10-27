@@ -64,6 +64,15 @@ func (uh UsersHandler) getAllUsers(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
+/*
+	curl -X POST http://localhost:3000/api/users \
+	     -H "Content-Type: application/json" \
+	     -d '{"Name": "name1", "Email":"tt@t.com", "Pwd": "hashtest1"}'
+
+	curl -X POST http://localhost:3000/api/users \
+	     -H "Content-Type: application/json" \
+	     -d '{"Name": "name2", "Email":"t2t@t.com", "Pwd": "hashtest2", "Address": {"street": "123 st", "zipcode": "12345", "city": "Los Angeles", "country": "US", "is_primary": true}}'
+*/
 func (uh UsersHandler) createSingleUser(w http.ResponseWriter, r *http.Request) {
 	var req types.CreateUserRequest
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
