@@ -1,0 +1,37 @@
+services:
+  users-app:
+    build:
+      context: .
+      dockerfile: dockerfile.dev
+    ports:
+      - 3000:8080
+    env_file:
+      - .env
+    networks:
+      - users-net
+    depends_on:
+      - users-db
+    develop:
+      watch:
+        - action: rebuild
+          path: ./
+          target: /app
+
+
+  users-db:
+    image: postgres:16-alpine
+    env_file:
+      - .env
+    volumes:
+      - type: bind
+        source: ./db-config/init.sql
+        target: /docker-entrypoint-initdb.d/init.sql
+      - type: volume
+        source: users-data
+        target: /var/lib/postgresql/data
+    networks:
+      - users-net
+networks:
+  users-net:
+volumes:
+  users-data:
