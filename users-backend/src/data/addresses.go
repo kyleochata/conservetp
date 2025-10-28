@@ -151,6 +151,28 @@ func (ad *AddressesData) UpdateAddress(addrId, userId string, newAddr *types.Cre
 	}, nil
 }
 
+func (ad *AddressesData) UpdateAddressById(userId string, address *types.UpdateAddressRequest) (*types.AddressResponse, error) {
+	if userId == "" || address == nil {
+		return nil, fmt.Errorf("Unable to UpdateAdressbyId (D): id / address empty")
+	}
+	var updatedAddr types.Address
+	err := ad.db.QueryRow(
+		`UPDATE addresses 
+		 SET street = $1, apt_num = $2, zipcode = $3, city = $4, state = $5, country = $6, is_primary = $7
+		 WHERE id = $8 AND user_id = $9
+		 RETURNING id, user_id, street, apt_num, zipcode, city, state, country, is_primary`,
+		address.Street, address.AptNum, address.Zipcode, address.City, address.State, address.Country, address.IsPrimary,
+		address.ID, userId,
+	).Scan(
+		&updatedAddr.ID, &updatedAddr.UserID, &updatedAddr.Street, &updatedAddr.AptNum,
+		&updatedAddr.Zipcode, &updatedAddr.City, &updatedAddr.State, &updatedAddr.Country, &updatedAddr.IsPrimary,
+	)
+	if err != nil {
+		return nil, fmt.Errorf("Error scannning updated user address: %w", err)
+	}
+	return &types.AddressResponse{Address: &updatedAddr}, nil
+}
+
 type Filter interface {
 	GetField() string
 	GetValue() interface{}

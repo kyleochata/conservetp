@@ -27,6 +27,16 @@ type CreateAddressRequest struct {
 	Country   string `json:"country,omitempty"`
 	IsPrimary bool   `json:"is_primary,omitempty"`
 }
+type UpdateAddressRequest struct {
+	ID        string `json:"id"`
+	Street    string `json:"street,omitempty"`
+	AptNum    string `json:"apt_num,omitempty"`
+	Zipcode   string `json:"zipcode,omitempty"`
+	City      string `json:"city,omitempty"`
+	State     string `json:"state,omitempty"`
+	Country   string `json:"country,omitempty"`
+	IsPrimary bool   `json:"is_primary,omitempty"`
+}
 
 type AddressResponse struct {
 	Address *Address `json:"address"`

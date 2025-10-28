@@ -100,22 +100,7 @@ func (ud UsersData) GetUserById(id string) (*types.UserResponse, error) {
 	}, nil
 }
 
-// func (ud UsersData) GetUserByEmail(email string) (User, error) {
-// 	if email == "" {
-// 		return User{}, fmt.Errorf("Error getting userbyemail: empty email")
-// 	}
-// 	var user User
-// 	err := ud.db.QueryRow(
-// 		"SELECT id, name, email WHERE email = $1",
-// 		email,
-// 	).Scan(&user.ID, &user.Name, &user.Email)
-// 	if err != nil {
-// 		return User{}, fmt.Errorf("Error getting userbyemail: %s: %w", email, err)
-// 	}
-// 	return user, nil
-// }
-
-func (ud *UsersData) UpdateUserInfo(id string, updUser types.CreateUserData) (*types.UserResponse, error) {
+func (ud *UsersData) UpdateUserInfo(id string, updUser types.UpdateUserRequest) (*types.UserResponse, error) {
 	if id == "" {
 		return nil, fmt.Errorf("Error updating user: empty id")
 	}

@@ -80,71 +80,100 @@ func (us *UsersService) DeleteUserById(id string) error {
 	return us.usersData.DeleteUser(id)
 }
 
-func (us *UsersService) UpdateUserInfoWAddr(id string, user types.CreateUserRequest) (types.UserResponse, error) {
+func (us *UsersService) UpdateUserInfoWAddr(id string, user types.UpdateUserRequest) (types.UserResponse, error) {
 	if id == "" {
 		return types.UserResponse{}, fmt.Errorf("Error Updating User infor: empty id")
 	}
-	updateUserResponse, err := us.UpdateUserInfo(id, user)
+	if user.Address != nil && user.Name == "" && user.Email == "" && user.Pwd == "" {
+		return types.UserResponse{}, fmt.Errorf("Error Updating User infor: user & address")
+	}
+	userResponse, err := us.UpdateUserInfo(id, user)
 	if err != nil {
 		return types.UserResponse{}, err
 	}
-	oldAddrId := updateUserResponse.Address.Address.ID
-	updateAddr := user.Address
-
-	updateAddrResponse, err := us.updateAddress(oldAddrId, updateAddr, updateUserResponse.User.ID)
-	if err != nil {
-		return types.UserResponse{}, err
+	fmt.Print(userResponse)
+	var address *types.AddressResponse
+	if user.Address != nil {
+		address, err = us.addressesData.UpdateAddressById(id, user.Address)
+		if err != nil {
+			return types.UserResponse{}, err
+		}
 	}
-	updateUserResponse.Address = updateAddrResponse
-	return updateUserResponse, nil
+	userResponse.Address = address
+	return userResponse, nil
+
 }
 
-func (us UsersService) updateAddress(addrId string, newAddr *types.CreateAddressRequest, userId string) (*types.AddressResponse, error) {
-	//check addr and id exists
-	if userId == "" {
-		return nil, fmt.Errorf("Error updating address. Empty userId")
-	}
-	if addrId == "" {
-		return nil, fmt.Errorf("Error updating address. Empty addrId")
-	}
-	if newAddr == nil {
-		return nil, fmt.Errorf("Error updating address. Empty userId")
-	}
+// func (us *UsersService) UpdateUserInfoWAddr(id string, user types.CreateUserRequest) (types.UserResponse, error) {
+// 	if id == "" {
+// 		return types.UserResponse{}, fmt.Errorf("Error Updating User infor: empty id")
+// 	}
+// 	updateUserResponse, err := us.UpdateUserInfo(id, user)
+// 	if err != nil {
+// 		return types.UserResponse{}, err
+// 	}
+// 	fmt.Println("dont with update user information. getting id.")
+// 	oldAddrId := updateUserResponse.Address.Address.ID
+// 	updateAddr := user.Address
 
-	_, err := us.usersData.GetUserById(userId) // change it to have a addressincluded flag that'll signal including addresses with the query. default = false
-	if err != nil {
-		return nil, err
-	}
+// 	updateAddrResponse, err := us.updateAddress(oldAddrId, updateAddr, updateUserResponse.User.ID)
+// 	if err != nil {
+// 		return types.UserResponse{}, err
+// 	}
+// 	updateUserResponse.Address = updateAddrResponse
+// 	return updateUserResponse, nil
+// }
 
-	prevAddr, err := us.addressesData.GetAddressById(addrId)
-	if err != nil {
-		return nil, err
-	}
+// func (us UsersService) updateAddress(addrId string, newAddr *types.CreateAddressRequest, userId string) (*types.AddressResponse, error) {
+// 	//check addr and id exists
+// 	if userId == "" {
+// 		return nil, fmt.Errorf("Error updating address. Empty userId")
+// 	}
+// 	if addrId == "" {
+// 		return nil, fmt.Errorf("Error updating address. Empty addrId")
+// 	}
+// 	if newAddr == nil {
+// 		return nil, fmt.Errorf("Error updating address. Empty userId")
+// 	}
 
-	newAddr = us.parseAddressChanges(prevAddr, newAddr)
+// 	_, err := us.usersData.GetUserById(userId) // change it to have a addressincluded flag that'll signal including addresses with the query. default = false
+// 	if err != nil {
+// 		return nil, err
+// 	}
 
-	//return call data layer
-	updateAddrResponse, err := us.addressesData.UpdateAddress(addrId, userId, newAddr)
-	if err != nil {
-		return nil, err
-	}
+// 	prevAddr, err := us.addressesData.GetAddressById(addrId)
+// 	if err != nil {
+// 		return nil, err
+// 	}
 
-	return updateAddrResponse, nil
-}
+// 	newAddr = us.parseAddressChanges(prevAddr, newAddr)
 
-func (us *UsersService) UpdateUserInfo(id string, user types.CreateUserRequest) (types.UserResponse, error) {
+// 	//return call data layer
+// 	updateAddrResponse, err := us.addressesData.UpdateAddress(addrId, userId, newAddr)
+// 	if err != nil {
+// 		return nil, err
+// 	}
+
+// 	return updateAddrResponse, nil
+// }
+
+func (us *UsersService) UpdateUserInfo(id string, user types.UpdateUserRequest) (types.UserResponse, error) {
 	if id == "" {
 		return types.UserResponse{}, fmt.Errorf("Error Updating User infor: empty id")
 	}
+	if user.Name == "" && user.Email == "" && user.Pwd == "" {
+		return types.UserResponse{}, fmt.Errorf("Must include a change to update user information")
+	}
 
-	rUserData := types.CreateUserData{
+	rUserData := types.UpdateUserRequest{
 		Name:  user.Name,
 		Email: user.Email,
-		Pwd:   user.Pwd,
 	}
 
-	if err := us.hashPassword(&rUserData); err != nil {
-		return types.UserResponse{}, err
+	if rUserData.Pwd != "" {
+		if err := us.hashPassword(&rUserData); err != nil {
+			return types.UserResponse{}, err
+		}
 	}
 
 	updateUserResponse, err := us.usersData.UpdateUserInfo(id, rUserData)
@@ -155,15 +184,20 @@ func (us *UsersService) UpdateUserInfo(id string, user types.CreateUserRequest) 
 	return *updateUserResponse, nil
 }
 
-func (us UsersService) hashPassword(userData *types.CreateUserData) error {
-	if userData.Pwd == "" {
+type hashData interface {
+	GetPwd() string
+	SetPwd(string)
+}
+
+func (us UsersService) hashPassword(userData hashData) error {
+	if userData.GetPwd() == "" {
 		return fmt.Errorf("Password for user empty")
 	}
-	hPwd, err := bcrypt.GenerateFromPassword([]byte(userData.Pwd), bcrypt.DefaultCost)
+	hPwd, err := bcrypt.GenerateFromPassword([]byte(userData.GetPwd()), bcrypt.DefaultCost)
 	if err != nil {
 		return err
 	}
-	userData.Pwd = string(hPwd)
+	userData.SetPwd(string(hPwd))
 	return nil
 }
 

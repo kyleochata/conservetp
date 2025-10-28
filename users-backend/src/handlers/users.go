@@ -36,12 +36,11 @@ func (uh *UsersHandler) HandleUserId(w http.ResponseWriter, r *http.Request) {
 	}
 	switch r.Method {
 	case http.MethodGet:
-		fmt.Println("calling getUserById handlers")
 		uh.getUserById(w, r)
 	case http.MethodPut:
-		uh.updateUserById(w, r, id)
+		uh.updateUserById(w, r)
 	case http.MethodDelete:
-		uh.deleteUserById(w, r, id)
+		uh.deleteUserById(w, r)
 	default:
 		http.Error(w, "HTTP method not allowed", http.StatusMethodNotAllowed)
 	}
@@ -121,8 +120,25 @@ func (uh UsersHandler) getUserById(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-func (uh UsersHandler) updateUserById(w http.ResponseWriter, r *http.Request, userId string) {
-	var req types.CreateUserRequest
+/*
+curl -X PUT http://localhost:3000/api/users/c8a8acc9-76cf-470d-843a-89a033220eda \
+	     -H "Content-Type: application/json" \
+	     -d '{"Name": "test_diffName", "Email":"testDiffemail@t.com", "Pwd": "hashtest2", "Address": {"street": "123 st", "zipcode": "12345", "city": "Los Angeles", "country": "US", "is_primary": true}}'
+*/
+
+func (uh UsersHandler) updateUserById(w http.ResponseWriter, r *http.Request) {
+	userId := r.PathValue("id")
+	var req types.UpdateUserRequest
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		http.Error(w, "Invalid JSON body", http.StatusBadRequest)
+		return
+	}
+	if req.Name == "" && req.Email == "" && req.Pwd == "" && req.Address == nil {
+		http.Error(w, "Must include a change to update user", http.StatusBadRequest)
+	}
+
+	w.Header().Set("Content-type", "application/json")
+
 	//if there's an address provided
 	if req.Address != nil {
 		user, err := uh.usersService.UpdateUserInfoWAddr(userId, req)
@@ -130,7 +146,6 @@ func (uh UsersHandler) updateUserById(w http.ResponseWriter, r *http.Request, us
 			http.Error(w, err.Error(), http.StatusInternalServerError)
 			return
 		}
-		w.Header().Set("Content-type", "application/json")
 		json.NewEncoder(w).Encode(user)
 	} else {
 		// no address provided
@@ -139,13 +154,12 @@ func (uh UsersHandler) updateUserById(w http.ResponseWriter, r *http.Request, us
 			http.Error(w, err.Error(), http.StatusInternalServerError)
 			return
 		}
-		w.Header().Set("Content-type", "application/json")
 		json.NewEncoder(w).Encode(user)
 	}
-	return
 }
 
-func (uh UsersHandler) deleteUserById(w http.ResponseWriter, r *http.Request, userId string) {
+func (uh UsersHandler) deleteUserById(w http.ResponseWriter, r *http.Request) {
+	userId := r.PathValue("id")
 	err := uh.usersService.DeleteUserById(userId)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
